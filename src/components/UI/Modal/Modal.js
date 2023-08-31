@@ -1,12 +1,14 @@
-import React from 'react'
-import classes from './Modal.module.css'
-import BackDrop from '../BackDrop/BackDrop'
-import Auxilary from '../../../hoc/Auxilary'
+import React from 'react';
+import classes from './Modal.module.css';
+import BackDrop from '../BackDrop/BackDrop';
+import Auxilary from '../../../hoc/Auxilary';
 
-const Modal = (props) => {
+const Modal = React.memo((props) => {
+  console.log('Modal is Rendering');
+
   return (
     <Auxilary>
-      <BackDrop show={props.show} closeModal={props.closeModal}/>
+      <BackDrop show={props.show} clicked={props.closeModal} />
       <div
         className={classes.Modal}
         style={{
@@ -17,7 +19,7 @@ const Modal = (props) => {
         {props.children}
       </div>
     </Auxilary>
-  )
-}
+  );
+}, (prevProps, nextProps) => prevProps.show === nextProps.show);
 
-export default Modal
+export default Modal;

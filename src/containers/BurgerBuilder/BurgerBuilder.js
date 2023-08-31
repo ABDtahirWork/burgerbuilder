@@ -60,7 +60,8 @@ export class BurgerBuilder extends Component {
         updatedIngredients[ingredient] -= 1
         updatedPrice -= INGREDIENT_PRICES[ingredient]
       }
-      return { ingredients: updatedIngredients, totalPrice: updatedPrice }
+      updatedPrice = parseFloat(updatedPrice.toFixed(2))
+      return { ingredients: updatedIngredients, totalPrice: updatedPrice}
     })
   }
 
@@ -82,7 +83,7 @@ export class BurgerBuilder extends Component {
     return (
       <Auxilary>
         <Modal show={this.state.purchasing} closeModal={this.handlePurchasing}>
-          <OrderSummary ingredients={this.state.ingredients} cancelPurchase={this.handlePurchasing} continuePurchase={this.purchaseContinueHandaler} />
+          <OrderSummary ingredients={this.state.ingredients} cancelPurchase={this.handlePurchasing} continuePurchase={this.purchaseContinueHandaler} totalPrice={this.state.totalPrice} />
         </Modal>
         <Burger ingredients={this.state.ingredients} />
         <BuildControls
