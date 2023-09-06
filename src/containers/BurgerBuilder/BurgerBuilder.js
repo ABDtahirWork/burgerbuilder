@@ -4,6 +4,9 @@ import Burger from '../../components/Burger/Burger'
 import BuildControls from '../../components/Burger/BuildControls/BuildControls'
 import Modal from '../../components/UI/Modal/Modal'
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary'
+import axios from '../../axios-orders'
+import Spinner from '../../components/UI/Spinner/Spinner'
+import errorHandaler from '../../hoc/errorHandaler/errorHandaler'
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -22,7 +25,8 @@ export class BurgerBuilder extends Component {
     },
     totalPrice: 0,
     purchaseable: false,
-    purchasing: false
+    purchasing: false,
+    loading: false,
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -61,16 +65,38 @@ export class BurgerBuilder extends Component {
         updatedPrice -= INGREDIENT_PRICES[ingredient]
       }
       updatedPrice = parseFloat(updatedPrice.toFixed(2))
-      return { ingredients: updatedIngredients, totalPrice: updatedPrice}
+      return { ingredients: updatedIngredients, totalPrice: updatedPrice }
     })
   }
 
   handlePurchasing = () => {
-    this.setState((prevState) => ({purchasing: !prevState.purchasing}))
+    this.setState((prevState) => ({ purchasing: !prevState.purchasing }))
   }
 
   purchaseContinueHandaler = () => {
-    alert("You can Continue")
+    this.setState({ loading: true })
+    const order = {
+      ingredients: this.state.ingredients,
+      price: this.state.totalPrice,
+      customer: {
+        name: 'Abd',
+        address: {
+          street: 'dha Y block',
+          city: 'lahore',
+        },
+        email: 'test@gmail.com',
+      },
+    }
+    axios
+      .post('/orders.json', order)
+      .then((response) => {
+        console.log(response)
+        this.setState({ loading: false, purchasing: false })
+      })
+      .catch((err) => {
+        console.log(err)
+        this.setState({ loading: false, purchasing: false })
+      })
   }
 
   render() {
@@ -83,7 +109,16 @@ export class BurgerBuilder extends Component {
     return (
       <Auxilary>
         <Modal show={this.state.purchasing} closeModal={this.handlePurchasing}>
-          <OrderSummary ingredients={this.state.ingredients} cancelPurchase={this.handlePurchasing} continuePurchase={this.purchaseContinueHandaler} totalPrice={this.state.totalPrice} />
+          {this.state.loading ? (
+            <Spinner />
+          ) : (
+            <OrderSummary
+              ingredients={this.state.ingredients}
+              cancelPurchase={this.handlePurchasing}
+              continuePurchase={this.purchaseContinueHandaler}
+              totalPrice={this.state.totalPrice}
+            />
+          )}
         </Modal>
         <Burger ingredients={this.state.ingredients} />
         <BuildControls
@@ -99,4 +134,4 @@ export class BurgerBuilder extends Component {
   }
 }
 
-export default BurgerBuilder
+export default errorHandaler(BurgerBuilder, axios)
