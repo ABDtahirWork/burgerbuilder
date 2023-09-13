@@ -1,14 +1,16 @@
-import React, { useState } from 'react'
+import React from 'react'
 import CheckoutSummary from '../../components/Order/CheckoutSummary/CheckoutSummary'
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 
 const Checkout = () => {
-  const location = useLocation()
   const navigate = useNavigate()
-  const [ingredients] = useState(
-    location.state ? location.state.ingredients : {}
-  )
-  const [totalPrice] = useState(location.state ? location.state.totalPrice : 0)
+  const ingredients = useSelector((state) => state.ingredients)
+  const totalPrice = useSelector((state) => state.totalPrice)
+  // const [ingredients] = useState(
+  //   location.state ? location.state.ingredients : {}
+  // )
+  // const [totalPrice] = useState(location.state ? location.state.totalPrice : 0)
 
   const cancelHandler = () => {
     navigate(-1)
