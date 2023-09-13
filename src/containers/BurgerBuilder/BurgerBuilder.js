@@ -1,102 +1,80 @@
-import React, { Component } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Auxilary from '../../hoc/Auxilary'
 import Burger from '../../components/Burger/Burger'
 import BuildControls from '../../components/Burger/BuildControls/BuildControls'
 import Modal from '../../components/UI/Modal/Modal'
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary'
+import axios from '../../axios-orders'
+import Spinner from '../../components/UI/Spinner/Spinner'
+import errorHandaler from '../../hoc/errorHandaler/errorHandaler'
+import { useDispatch, useSelector } from 'react-redux'
+import { burgerActions } from '../../store/store'
 
-const INGREDIENT_PRICES = {
-  salad: 0.5,
-  bacon: 0.7,
-  cheese: 0.4,
-  meat: 1.3,
+const BurgerBuilder = () => {
+  const dispatch = useDispatch()
+  const ingredients = useSelector((state) => state.ingredients)
+  const totalPrice = useSelector((state) => state.totalPrice)
+  console.log('redux ingredients: ', ingredients)
+  const [purchaseable, setPurchaseable] = useState(false)
+  const [purchasing, setPurchasing] = useState(false)
+  const [loading] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const sum = Object.values(ingredients).reduce((sum, el) => sum + el, 0)
+    setPurchaseable(sum > 0)
+  }, [ingredients])
+
+
+  const addIngredient = (ingredient) => {
+    dispatch(burgerActions.addIngredients({ ingredient, amount: 1 }))
+  }
+
+  const removeIngredient = (ingredient) => {
+    if (ingredients[ingredient] > 0 && totalPrice > 0) {
+      dispatch(burgerActions.removeIngredients({ ingredient, amount: 1 }))
+    } 
+  }
+
+  const handlePurchasing = () => {
+    setPurchasing((prevPurchasing) => !prevPurchasing)
+  }
+
+  const purchaseContinueHandler = () => {
+    navigate('/checkout')
+  }
+
+  const disabledInfo = { ...ingredients }
+  for (let key in disabledInfo) {
+    disabledInfo[key] = disabledInfo[key] <= 0
+  }
+
+  return (
+    <Auxilary>
+      <Modal show={purchasing} closeModal={handlePurchasing}>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <OrderSummary
+            ingredients={ingredients}
+            cancelPurchase={handlePurchasing}
+            continuePurchase={purchaseContinueHandler}
+            totalPrice={totalPrice}
+          />
+        )}
+      </Modal>
+      <Burger ingredients={ingredients} />
+      <BuildControls
+        price={totalPrice}
+        addIngredient={addIngredient}
+        removeIngredient={removeIngredient}
+        disabled={disabledInfo}
+        disableCheckout={!purchaseable}
+        handlePurchasing={handlePurchasing}
+      />
+    </Auxilary>
+  )
 }
 
-export class BurgerBuilder extends Component {
-  state = {
-    ingredients: {
-      salad: 0,
-      bacon: 0,
-      cheese: 0,
-      meat: 0,
-    },
-    totalPrice: 0,
-    purchaseable: false,
-    purchasing: false
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.ingredients !== this.state.ingredients) {
-      this.updatePurchaseableState(this.state.ingredients)
-    }
-  }
-
-  updatePurchaseableState = (ingredients) => {
-    const sum = Object.keys(ingredients)
-      .map((igKey) => {
-        return ingredients[igKey]
-      })
-      .reduce((sum, el) => {
-        return sum + el
-      }, 0)
-
-    this.setState({ purchaseable: sum > 0 })
-  }
-
-  addIngredient = (ingredient) => {
-    this.setState((prevState) => {
-      const updatedIngredients = { ...prevState.ingredients }
-      updatedIngredients[ingredient] += 1
-      const updatedPrice = prevState.totalPrice + INGREDIENT_PRICES[ingredient]
-      return { ingredients: updatedIngredients, totalPrice: updatedPrice }
-    })
-  }
-
-  removeIngredient = (ingredient) => {
-    this.setState((prevState) => {
-      const updatedIngredients = { ...prevState.ingredients }
-      let updatedPrice = prevState.totalPrice
-      if (updatedIngredients[ingredient] > 0 && prevState.totalPrice > 0) {
-        updatedIngredients[ingredient] -= 1
-        updatedPrice -= INGREDIENT_PRICES[ingredient]
-      }
-      updatedPrice = parseFloat(updatedPrice.toFixed(2))
-      return { ingredients: updatedIngredients, totalPrice: updatedPrice}
-    })
-  }
-
-  handlePurchasing = () => {
-    this.setState((prevState) => ({purchasing: !prevState.purchasing}))
-  }
-
-  purchaseContinueHandaler = () => {
-    alert("You can Continue")
-  }
-
-  render() {
-    const disabaledInfo = {
-      ...this.state.ingredients,
-    }
-    for (let key in disabaledInfo) {
-      disabaledInfo[key] = disabaledInfo[key] <= 0
-    }
-    return (
-      <Auxilary>
-        <Modal show={this.state.purchasing} closeModal={this.handlePurchasing}>
-          <OrderSummary ingredients={this.state.ingredients} cancelPurchase={this.handlePurchasing} continuePurchase={this.purchaseContinueHandaler} totalPrice={this.state.totalPrice} />
-        </Modal>
-        <Burger ingredients={this.state.ingredients} />
-        <BuildControls
-          price={this.state.totalPrice}
-          addIngredient={this.addIngredient}
-          removeIngredient={this.removeIngredient}
-          disabled={disabaledInfo}
-          diableCheckout={!this.state.purchaseable}
-          handlePurchasing={this.handlePurchasing}
-        />
-      </Auxilary>
-    )
-  }
-}
-
-export default BurgerBuilder
+export default errorHandaler(BurgerBuilder, axios)
